@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "rust-lang.rust-analyzer",
+    "dustypomerleau.rust-syntax",
+    "jinxdash.prettier-rust",
+    "esbenp.prettier-vscode",
+    "aaron-bond.better-comments",
+    "alefragnani.bookmarks",
+    "panicbit.cargo",
+    "tamasfe.even-better-toml",
+    "gruntfuggly.todo-tree"
+  ]
+}
