@@ -1,15 +1,14 @@
 pub mod lexer;
 
 fn main() {
-    let source = "var myNum = 4; print(x);";
-    let mut lexer = lexer::Lexer::new(source);
+    let source = "var myStr = \"Hello, Rust!\"; print(myStr); var myNum = 4.28; print(myNum);";
 
-    while lexer.current_token() != &lexer::Token::EOF {
-        println!("{:?}", lexer.current_token());
-        lexer.advance();
-    }
+        let mut lexer = lexer::Lexer::new(source);
 
-    println!("{:?}", lexer.current_token());
+        while lexer.current_token() != &lexer::Token::EOF {
+            lexer.advance();
+            println!("{:?}", lexer.current_token());
+        }
 }
 
 #[cfg(test)]
@@ -17,20 +16,30 @@ mod tests {
 
     #[test]
     fn test() {
-        use crate::lexer::{Literal, Token};
+        use crate::lexer::{Lexer, Literal, Token};
 
-        let source = "var myNum = 4; print(x);";
-        let mut lexer = crate::lexer::Lexer::new(source);
+        let source = "var myStr = \"Hello, Rust!\"; print(myStr); var myNum = 4.28; print(myNum);";
+        let mut lexer = Lexer::new(source);
 
         let expected_tokens = vec![
             Token::Var,
-            Token::Identifier("myNum".to_string()),
+            Token::Identifier("myStr".to_string()),
             Token::Equals,
-            Token::Literal(Literal::Number(4)),
+            Token::Literal(Literal::String("Hello, Rust!".to_string())),
             Token::SemiColon,
             Token::Identifier("print".to_string()),
             Token::LeftParen,
-            Token::Identifier("x".to_string()),
+            Token::Identifier("myStr".to_string()),
+            Token::RightParen,
+            Token::SemiColon,
+            Token::Var,
+            Token::Identifier("myNum".to_string()),
+            Token::Equals,
+            Token::Literal(Literal::Number(4.28)),
+            Token::SemiColon,
+            Token::Identifier("print".to_string()),
+            Token::LeftParen,
+            Token::Identifier("myNum".to_string()),
             Token::RightParen,
             Token::SemiColon,
             Token::EOF,

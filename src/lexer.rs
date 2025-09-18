@@ -1,10 +1,9 @@
-use std::str;
-use std::{iter, num::ParseIntError};
+use std::{str, iter, num::ParseFloatError};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
     String(String),
-    Number(u32),
+    Number(f64),
     Boolean(bool),
 }
 
@@ -54,10 +53,10 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_number(&mut self) -> Result<u32, ParseIntError> {
+    fn read_number(&mut self) -> Result<f64, ParseFloatError> {
         let mut num_str = String::new();
         while let Some(&ch) = self.chars.peek() {
-            if ch.is_ascii_digit() {
+            if ch.is_ascii_digit() || ch == '-' || ch == '.' {
                 num_str.push(ch);
                 self.chars.next();
             } else {
@@ -80,40 +79,65 @@ impl<'a> Lexer<'a> {
         identifier
     }
 
+    fn read_string(&mut self) -> String {
+        let mut string = String::new();
+
+        if let Some(&ch) = self.chars.peek() {
+            if ch != '"' {
+                return string;
+            }
+            self.chars.next();
+        } else {
+            return string;
+        }
+
+        while let Some(&ch) = self.chars.peek() {
+            self.chars.next();
+
+            if ch == '"' {
+                break;
+            } else {
+                string.push(ch);
+            }
+        }
+
+        string
+    }
+
     fn next_token(&mut self) -> Token {
         loop {
             self.skip_whitespace();
 
             match self.chars.peek() {
                 None => return Token::EOF,
-                Some(&'=') => {
+                Some('=') => {
                     self.chars.next();
                     return Token::Equals;
                 }
-                Some(&';') => {
+                Some(';') => {
                     self.chars.next();
                     return Token::SemiColon;
                 }
-                Some(&'(') => {
+                Some('(') => {
                     self.chars.next();
                     return Token::LeftParen;
                 }
-                Some(&')') => {
+                Some(')') => {
                     self.chars.next();
                     return Token::RightParen;
                 }
-                Some(&',') => {
+                Some(',') => {
                     self.chars.next();
                     return Token::Comma;
                 }
-                Some(&ch) if ch.is_ascii_digit() => match self.read_number() {
+                Some(ch) if ch.is_ascii_digit() => match self.read_number() {
                     Ok(num) => return Token::Literal(Literal::Number(num)),
                     Err(_) => {
                         self.chars.next();
                         continue;
                     }
                 },
-                Some(&ch) if ch.is_alphabetic() => {
+                Some(ch) if ch.is_alphabetic() => {
                     let identifier = self.read_identifier();
                     match identifier.as_str() {
                         "var" => return Token::Var,
@@ -121,6 +145,10 @@ impl<'a> Lexer<'a> {
                         "false" => return Token::Literal(Literal::Boolean(false)),
                         _ => return Token::Identifier(identifier),
                     }
+                }
+                Some('"') => {
+                    let string = self.read_string();
+                    return Token::Literal(Literal::String(string));
                 }
                 Some(_) => {
                     self.chars.next();
