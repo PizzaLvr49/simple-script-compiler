@@ -3,20 +3,19 @@ pub mod lexer;
 fn main() {
     let source = "var myStr = \"Hello, Rust!\"; print(myStr); var myNum = 4.28; print(myNum);";
 
-        let mut lexer = lexer::Lexer::new(source);
+    let mut lexer = lexer::Lexer::new(source);
 
-        while lexer.current_token() != &lexer::Token::EOF {
-            lexer.advance();
-            println!("{:?}", lexer.current_token());
-        }
+    while lexer.current_token() != &lexer::Token::EOF {
+        lexer.advance();
+        println!("{:?}", lexer.current_token());
+    }
 }
 
 #[cfg(test)]
 mod tests {
-
     #[test]
     fn test() {
-        use crate::lexer::{Lexer, Literal, Token};
+        use crate::lexer::{ Lexer, Literal, Token };
 
         let source = "var myStr = \"Hello, Rust!\"; print(myStr); var myNum = 4.28; print(myNum);";
         let mut lexer = Lexer::new(source);
@@ -42,7 +41,7 @@ mod tests {
             Token::Identifier("myNum".to_string()),
             Token::RightParen,
             Token::SemiColon,
-            Token::EOF,
+            Token::EOF
         ];
 
         let mut actual_tokens = Vec::new();

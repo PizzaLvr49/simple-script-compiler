@@ -1,4 +1,4 @@
-use std::{str, iter, num::ParseFloatError};
+use std::{iter, num::ParseFloatError, str};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
