@@ -17,7 +17,7 @@ mod tests {
     
     #[test]
     fn test() {
-        use crate::lexer::{Token, Constant};
+        use crate::lexer::{Token, Literal};
         
         let source = "var myNum = 4; print(x);";
         let mut lexer = crate::lexer::Lexer::new(source);
@@ -26,7 +26,7 @@ mod tests {
             Token::Var,
             Token::Identifier("myNum".to_string()),
             Token::Equals, 
-            Token::Constant(Constant::Number(4)),
+            Token::Literal(Literal::Number(4)),
             Token::SemiColon,
             Token::Identifier("print".to_string()),
             Token::LeftParen,

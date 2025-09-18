@@ -1,10 +1,11 @@
 use std::{iter, num::ParseIntError};
+use std::str;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Constant {
-    String(String),
-    Number(u32),
-    Boolean(bool),
+pub enum Literal {
+    String(String), // tells you what string the String constant is
+    Number(u32), // same here but with a number
+    Boolean(bool), // same here :D
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -13,7 +14,7 @@ pub enum Token {
     Identifier(String),
     Equals,
     SemiColon,
-    Constant(Constant),
+    Literal(Literal),
     LeftParen,
     RightParen,
     Comma,
@@ -21,7 +22,7 @@ pub enum Token {
 }
 
 pub struct Lexer<'a> {
-    chars: iter::Peekable<std::str::Chars<'a>>,
+    chars: iter::Peekable<str::Chars<'a>>,
     current_token: Token,
 }
 
@@ -107,7 +108,7 @@ impl<'a> Lexer<'a> {
                 }
                 Some(&ch) if ch.is_ascii_digit() => {
                     match self.read_number() {
-                        Ok(num) => return Token::Constant(Constant::Number(num)),
+                        Ok(num) => return Token::Literal(Literal::Number(num)),
                         Err(_) => {
                             self.chars.next();
                             continue;
@@ -118,8 +119,8 @@ impl<'a> Lexer<'a> {
                     let identifier = self.read_identifier();
                     match identifier.as_str() {
                         "var" => return Token::Var,
-                        "true" => return Token::Constant(Constant::Boolean(true)),
-                        "false" => return Token::Constant(Constant::Boolean(false)),
+                        "true" => return Token::Literal(Literal::Boolean(true)),
+                        "false" => return Token::Literal(Literal::Boolean(false)),
                         _ => return Token::Identifier(identifier),
                     }
                 }
