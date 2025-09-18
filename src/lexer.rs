@@ -1,11 +1,11 @@
-use std::{iter, num::ParseIntError};
 use std::str;
+use std::{iter, num::ParseIntError};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
-    String(String), // tells you what string the String constant is
-    Number(u32), // same here but with a number
-    Boolean(bool), // same here :D
+    String(String),
+    Number(u32),
+    Boolean(bool),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -106,15 +106,13 @@ impl<'a> Lexer<'a> {
                     self.chars.next();
                     return Token::Comma;
                 }
-                Some(&ch) if ch.is_ascii_digit() => {
-                    match self.read_number() {
-                        Ok(num) => return Token::Literal(Literal::Number(num)),
-                        Err(_) => {
-                            self.chars.next();
-                            continue;
-                        }
+                Some(&ch) if ch.is_ascii_digit() => match self.read_number() {
+                    Ok(num) => return Token::Literal(Literal::Number(num)),
+                    Err(_) => {
+                        self.chars.next();
+                        continue;
                     }
-                }
+                },
                 Some(&ch) if ch.is_alphabetic() => {
                     let identifier = self.read_identifier();
                     match identifier.as_str() {
