@@ -1,5 +1,5 @@
 use crate::lexer::Literal;
-use crate::parser::{ Expression, Program, Statement };
+use crate::parser::{Expression, Program, Statement};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -15,7 +15,11 @@ impl std::fmt::Display for Value {
         match self {
             Value::String(s) => write!(f, "{}", s),
             Value::Number(n) => {
-                if n.fract() == 0.0 { write!(f, "{}", *n as i64) } else { write!(f, "{}", n) }
+                if n.fract() == 0.0 {
+                    write!(f, "{}", *n as i64)
+                } else {
+                    write!(f, "{}", n)
+                }
             }
             Value::Boolean(b) => write!(f, "{}", b),
             Value::Null => write!(f, "null"),
@@ -38,16 +42,22 @@ pub enum RuntimeError {
 impl std::fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RuntimeError::UndefinedVariable(name) => { write!(f, "Undefined variable '{}'", name) }
-            RuntimeError::UndefinedFunction(name) => { write!(f, "Undefined function '{}'", name) }
+            RuntimeError::UndefinedVariable(name) => {
+                write!(f, "Undefined variable '{}'", name)
+            }
+            RuntimeError::UndefinedFunction(name) => {
+                write!(f, "Undefined function '{}'", name)
+            }
             RuntimeError::TypeError(msg) => write!(f, "Type error: {}", msg),
-            RuntimeError::ArityMismatch { function, expected, found } => {
+            RuntimeError::ArityMismatch {
+                function,
+                expected,
+                found,
+            } => {
                 write!(
                     f,
                     "Function '{}' expects {} arguments, but {} were provided",
-                    function,
-                    expected,
-                    found
+                    function, expected, found
                 )
             }
         }
@@ -130,7 +140,7 @@ impl Interpreter {
     fn call_function(
         &mut self,
         name: String,
-        args: Vec<Expression>
+        args: Vec<Expression>,
     ) -> Result<Value, RuntimeError> {
         let mut arg_values = Vec::new();
         for arg in args {
@@ -204,7 +214,10 @@ mod tests {
     #[test]
     fn test_variable_declaration_and_retrieval() {
         let interpreter = interpret_source("var x = 42;").unwrap();
-        assert_eq!(interpreter.get_variables().get("x"), Some(&Value::Number(42.0)));
+        assert_eq!(
+            interpreter.get_variables().get("x"),
+            Some(&Value::Number(42.0))
+        );
     }
 
     #[test]
@@ -219,13 +232,15 @@ mod tests {
     #[test]
     fn test_boolean_variable() {
         let interpreter = interpret_source("var flag = true;").unwrap();
-        assert_eq!(interpreter.get_variables().get("flag"), Some(&Value::Boolean(true)));
+        assert_eq!(
+            interpreter.get_variables().get("flag"),
+            Some(&Value::Boolean(true))
+        );
     }
 
     #[test]
     fn test_multiple_variables() {
-        let source =
-            r#"
+        let source = r#"
             var name = "Alice";
             var age = 25;
             var active = true;
@@ -236,8 +251,14 @@ mod tests {
             interpreter.get_variables().get("name"),
             Some(&Value::String("Alice".to_string()))
         );
-        assert_eq!(interpreter.get_variables().get("age"), Some(&Value::Number(25.0)));
-        assert_eq!(interpreter.get_variables().get("active"), Some(&Value::Boolean(true)));
+        assert_eq!(
+            interpreter.get_variables().get("age"),
+            Some(&Value::Number(25.0))
+        );
+        assert_eq!(
+            interpreter.get_variables().get("active"),
+            Some(&Value::Boolean(true))
+        );
     }
 
     #[test]
@@ -248,8 +269,14 @@ mod tests {
         "#;
         let interpreter = interpret_source(source).unwrap();
 
-        assert_eq!(interpreter.get_variables().get("x"), Some(&Value::Number(10.0)));
-        assert_eq!(interpreter.get_variables().get("y"), Some(&Value::Number(10.0)));
+        assert_eq!(
+            interpreter.get_variables().get("x"),
+            Some(&Value::Number(10.0))
+        );
+        assert_eq!(
+            interpreter.get_variables().get("y"),
+            Some(&Value::Number(10.0))
+        );
     }
 
     #[test]
@@ -270,8 +297,7 @@ mod tests {
 
     #[test]
     fn test_print_with_variables() {
-        let source =
-            r#"
+        let source = r#"
             var name = "Alice";
             var age = 25;
             print(name, age);
@@ -308,7 +334,11 @@ mod tests {
         let result = interpret_source("typeof();");
         assert!(result.is_err());
         match result.unwrap_err() {
-            RuntimeError::ArityMismatch { function, expected, found } => {
+            RuntimeError::ArityMismatch {
+                function,
+                expected,
+                found,
+            } => {
                 assert_eq!(function, "typeof");
                 assert_eq!(expected, 1);
                 assert_eq!(found, 0);
