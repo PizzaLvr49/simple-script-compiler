@@ -34,7 +34,7 @@ jobs:
     - name: Setup Pages
       uses: actions/configure-pages@v4
     - name: Generate documentation
-      run: cargo doc --no-deps --document-private-items
+      run: cargo doc --no-deps
     - name: Add index.html redirect
       run: |
         echo '<meta http-equiv="refresh" content="0; url=./target/doc">' > target/doc/index.html
