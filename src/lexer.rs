@@ -20,6 +20,7 @@ pub enum Token {
     EOF,
 }
 
+//TODO: Lexical Errors
 pub struct Lexer<'a> {
     chars: iter::Peekable<str::Chars<'a>>,
     current_token: Token,
