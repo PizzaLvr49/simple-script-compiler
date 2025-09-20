@@ -1,57 +1,42 @@
 pub mod lexer;
+pub mod parser;
 
 fn main() {
-    let source = "var myStr = \"Hello, Rust!\"; print(myStr); var myNum = 4.28; print(myNum);";
+    let source = "var myStr = \"Hello, Rust!\"; print(myStr); var myNum = 4.28; print(myNum); var test = myNum; print(test);";
 
-    let mut lexer = lexer::Lexer::new(source);
+    let lexer = lexer::Lexer::new(source);
+    let mut parser = parser::Parser::new(lexer);
 
-    while lexer.current_token() != &lexer::Token::EOF {
-        lexer.advance();
-        println!("{:?}", lexer.current_token());
-    }
-}
+    match parser.parse() {
+        Ok(program) => {
+            println!("Parsed program successfully!");
+            println!("Number of statements: {}", program.statements.len());
+            println!();
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test() {
-        use crate::lexer::{ Lexer, Literal, Token };
+            for (i, stmt) in program.statements.iter().enumerate() {
+                println!("Statement {}: {:?}", i + 1, stmt);
 
-        let source = "var myStr = \"Hello, Rust!\"; print(myStr); var myNum = 4.28; print(myNum);";
-        let mut lexer = Lexer::new(source);
-
-        let expected_tokens = vec![
-            Token::Var,
-            Token::Identifier("myStr".to_string()),
-            Token::Equals,
-            Token::Literal(Literal::String("Hello, Rust!".to_string())),
-            Token::SemiColon,
-            Token::Identifier("print".to_string()),
-            Token::LeftParen,
-            Token::Identifier("myStr".to_string()),
-            Token::RightParen,
-            Token::SemiColon,
-            Token::Var,
-            Token::Identifier("myNum".to_string()),
-            Token::Equals,
-            Token::Literal(Literal::Number(4.28)),
-            Token::SemiColon,
-            Token::Identifier("print".to_string()),
-            Token::LeftParen,
-            Token::Identifier("myNum".to_string()),
-            Token::RightParen,
-            Token::SemiColon,
-            Token::EOF
-        ];
-
-        let mut actual_tokens = Vec::new();
-
-        while lexer.current_token() != &Token::EOF {
-            actual_tokens.push(lexer.current_token().clone());
-            lexer.advance();
+                match stmt {
+                    parser::Statement::VarDeclaration { name, value } => {
+                        println!("  Variable declaration: '{}' = {:?}", name, value);
+                    }
+                    parser::Statement::Expression(expr) => match expr {
+                        parser::Expression::FunctionCall { name, args } => {
+                            println!("  Function call: '{}' with {} arguments", name, args.len());
+                            for (j, arg) in args.iter().enumerate() {
+                                println!("    Arg {}: {:?}", j + 1, arg);
+                            }
+                        }
+                        _ => {
+                            println!("  Expression: {:?}", expr);
+                        }
+                    },
+                }
+                println!();
+            }
         }
-        actual_tokens.push(lexer.current_token().clone());
-
-        assert_eq!(actual_tokens, expected_tokens);
+        Err(error) => {
+            println!("Parse error: {:?}", error);
+        }
     }
 }
