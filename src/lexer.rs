@@ -146,16 +146,16 @@ impl<'a> Lexer<'a> {
                 Some(&'-') => {
                     let mut chars_clone = self.chars.clone();
                     chars_clone.next();
-                    if let Some(&ch) = chars_clone.peek() {
-                        if ch.is_ascii_digit() || ch == '.' {
-                            match self.read_number() {
-                                Ok(num) => {
-                                    return Token::Literal(Literal::Number(num));
-                                }
-                                Err(_) => {
-                                    self.chars.next();
-                                    return Token::Subtract;
-                                }
+                    if let Some(&ch) = chars_clone.peek()
+                        && (ch.is_ascii_digit() || ch == '.')
+                    {
+                        match self.read_number() {
+                            Ok(num) => {
+                                return Token::Literal(Literal::Number(num));
+                            }
+                            Err(_) => {
+                                self.chars.next();
+                                return Token::Subtract;
                             }
                         }
                     }
@@ -165,16 +165,16 @@ impl<'a> Lexer<'a> {
                 Some(&'.') => {
                     let mut chars_clone = self.chars.clone();
                     chars_clone.next();
-                    if let Some(&ch) = chars_clone.peek() {
-                        if ch.is_ascii_digit() {
-                            match self.read_number() {
-                                Ok(num) => {
-                                    return Token::Literal(Literal::Number(num));
-                                }
-                                Err(_) => {
-                                    self.chars.next();
-                                    continue;
-                                }
+                    if let Some(&ch) = chars_clone.peek()
+                        && (ch.is_ascii_digit() || ch == '.')
+                    {
+                        match self.read_number() {
+                            Ok(num) => {
+                                return Token::Literal(Literal::Number(num));
+                            }
+                            Err(_) => {
+                                self.chars.next();
+                                continue;
                             }
                         }
                     }
