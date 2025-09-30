@@ -58,11 +58,8 @@ jobs:
       - name: Build docs
         run: cargo doc --no-deps
 
-      - name: Upload pages artifact
-        uses: actions/upload-pages-artifact@v1
+      - name: Deploy to GitHub Pages (via peaceiris)
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          path: ./target/doc
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
-        with: {}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/doc
