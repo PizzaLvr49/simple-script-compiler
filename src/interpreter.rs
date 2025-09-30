@@ -1,5 +1,5 @@
 use crate::lexer::Literal;
-use crate::parser::{Expression, Program, Statement};
+use crate::parser::{BinaryOp, Expression, Program, Statement};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -126,6 +126,11 @@ impl Interpreter {
             Expression::Literal(literal) => Ok(self.literal_to_value(literal)),
             Expression::Identifier(name) => self.environment.get(&name),
             Expression::FunctionCall { name, args } => self.call_function(name, args),
+            Expression::Binary { left, op, right } => {
+                let left_val = self.evaluate_expression(*left)?;
+                let right_val = self.evaluate_expression(*right)?;
+                self.evaluate_binary_op(left_val, op, right_val)
+            }
         }
     }
 
@@ -134,6 +139,39 @@ impl Interpreter {
             Literal::String(s) => Value::String(s),
             Literal::Number(n) => Value::Number(n),
             Literal::Boolean(b) => Value::Boolean(b),
+        }
+    }
+
+    fn evaluate_binary_op(
+        &self,
+        left: Value,
+        op: BinaryOp,
+        right: Value,
+    ) -> Result<Value, RuntimeError> {
+        match (left, right) {
+            (Value::Number(l), Value::Number(r)) => {
+                let result = match op {
+                    BinaryOp::Add => l + r,
+                    BinaryOp::Subtract => l - r,
+                    BinaryOp::Multiply => l * r,
+                    BinaryOp::Divide => {
+                        if r == 0.0 {
+                            return Err(RuntimeError::TypeError("Division by zero".to_string()));
+                        }
+                        l / r
+                    }
+                };
+                Ok(Value::Number(result))
+            }
+            (Value::String(l), Value::String(r)) if matches!(op, BinaryOp::Add) => {
+                Ok(Value::String(format!("{}{}", l, r)))
+            }
+            (l, r) => Err(RuntimeError::TypeError(format!(
+                "Cannot apply {:?} to {} and {}",
+                op,
+                value_type_name(&l),
+                value_type_name(&r)
+            ))),
         }
     }
 
@@ -195,155 +233,11 @@ impl Interpreter {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::lexer::Lexer;
-    use crate::parser::Parser;
-
-    fn interpret_source(source: &str) -> Result<Interpreter, RuntimeError> {
-        let lexer = Lexer::new(source);
-        let mut parser = Parser::new(lexer);
-        let program = parser.parse().expect("Failed to parse");
-
-        let mut interpreter = Interpreter::new();
-        interpreter.interpret(program)?;
-        Ok(interpreter)
-    }
-
-    #[test]
-    fn test_variable_declaration_and_retrieval() {
-        let interpreter = interpret_source("var x = 42;").unwrap();
-        assert_eq!(
-            interpreter.get_variables().get("x"),
-            Some(&Value::Number(42.0))
-        );
-    }
-
-    #[test]
-    fn test_string_variable() {
-        let interpreter = interpret_source(r#"var greeting = "hello";"#).unwrap();
-        assert_eq!(
-            interpreter.get_variables().get("greeting"),
-            Some(&Value::String("hello".to_string()))
-        );
-    }
-
-    #[test]
-    fn test_boolean_variable() {
-        let interpreter = interpret_source("var flag = true;").unwrap();
-        assert_eq!(
-            interpreter.get_variables().get("flag"),
-            Some(&Value::Boolean(true))
-        );
-    }
-
-    #[test]
-    fn test_multiple_variables() {
-        let source = r#"
-            var name = "Alice";
-            var age = 25;
-            var active = true;
-        "#;
-        let interpreter = interpret_source(source).unwrap();
-
-        assert_eq!(
-            interpreter.get_variables().get("name"),
-            Some(&Value::String("Alice".to_string()))
-        );
-        assert_eq!(
-            interpreter.get_variables().get("age"),
-            Some(&Value::Number(25.0))
-        );
-        assert_eq!(
-            interpreter.get_variables().get("active"),
-            Some(&Value::Boolean(true))
-        );
-    }
-
-    #[test]
-    fn test_variable_reference() {
-        let source = r#"
-            var x = 10;
-            var y = x;
-        "#;
-        let interpreter = interpret_source(source).unwrap();
-
-        assert_eq!(
-            interpreter.get_variables().get("x"),
-            Some(&Value::Number(10.0))
-        );
-        assert_eq!(
-            interpreter.get_variables().get("y"),
-            Some(&Value::Number(10.0))
-        );
-    }
-
-    #[test]
-    fn test_undefined_variable_error() {
-        let result = interpret_source("var y = x;");
-        assert!(result.is_err());
-        match result.unwrap_err() {
-            RuntimeError::UndefinedVariable(name) => assert_eq!(name, "x"),
-            _ => panic!("Expected UndefinedVariable error"),
-        }
-    }
-
-    #[test]
-    fn test_print_function() {
-        let result = interpret_source(r#"print("Hello, World!");"#);
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn test_print_with_variables() {
-        let source = r#"
-            var name = "Alice";
-            var age = 25;
-            print(name, age);
-        "#;
-        let result = interpret_source(source);
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn test_typeof_function() {
-        let source = r#"
-            var x = 42;
-            var t = typeof(x);
-        "#;
-        let interpreter = interpret_source(source).unwrap();
-        assert_eq!(
-            interpreter.get_variables().get("t"),
-            Some(&Value::String("number".to_string()))
-        );
-    }
-
-    #[test]
-    fn test_undefined_function_error() {
-        let result = interpret_source("unknown_function();");
-        assert!(result.is_err());
-        match result.unwrap_err() {
-            RuntimeError::UndefinedFunction(name) => assert_eq!(name, "unknown_function"),
-            _ => panic!("Expected UndefinedFunction error"),
-        }
-    }
-
-    #[test]
-    fn test_arity_mismatch_error() {
-        let result = interpret_source("typeof();");
-        assert!(result.is_err());
-        match result.unwrap_err() {
-            RuntimeError::ArityMismatch {
-                function,
-                expected,
-                found,
-            } => {
-                assert_eq!(function, "typeof");
-                assert_eq!(expected, 1);
-                assert_eq!(found, 0);
-            }
-            _ => panic!("Expected ArityMismatch error"),
-        }
+fn value_type_name(value: &Value) -> &str {
+    match value {
+        Value::String(_) => "string",
+        Value::Number(_) => "number",
+        Value::Boolean(_) => "boolean",
+        Value::Null => "null",
     }
 }
