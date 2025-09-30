@@ -1,0 +1,41 @@
+#!/usr/bin/env sh
+# Pre-commit hook (POSIX sh)
+# - Runs `cargo fmt --all` to auto-format
+# - Attempts `cargo clippy --fix` using nightly if available
+# - Runs `cargo clippy -- -D warnings` and blocks commit on warnings/errors
+
+echo "Running pre-commit checks: cargo fmt, clippy"
+
+ROOT_DIR=$(git rev-parse --show-toplevel 2>/dev/null || echo ".")
+cd "$ROOT_DIR" || exit 1
+
+echo "-> Running cargo fmt --all"
+cargo fmt --all
+FMT_STATUS=$?
+if [ $FMT_STATUS -ne 0 ]; then
+  echo "cargo fmt failed (status $FMT_STATUS). Aborting commit."
+  exit $FMT_STATUS
+fi
+
+echo "-> Attempting clippy autofix with nightly (if available)"
+if command -v rustup >/dev/null 2>&1; then
+  if rustup toolchain list | grep -q "nightly"; then
+    echo "nightly toolchain detected — running clippy --fix"
+    rustup run nightly cargo clippy --fix -Z unstable-options || true
+  else
+    echo "nightly toolchain not found — skipping clippy --fix"
+  fi
+else
+  echo "rustup not found — skipping clippy --fix"
+fi
+
+echo "-> Running cargo clippy (deny warnings)"
+cargo clippy -- -D warnings
+CLIPPY_STATUS=$?
+if [ $CLIPPY_STATUS -ne 0 ]; then
+  echo "cargo clippy found issues (status $CLIPPY_STATUS). Fix or run 'rustup run nightly cargo clippy --fix -Z unstable-options' to apply fixes, then commit again."
+  exit $CLIPPY_STATUS
+fi
+
+echo "Pre-commit checks passed"
+exit 0

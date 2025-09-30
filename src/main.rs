@@ -15,13 +15,13 @@ fn main() {
             let mut interpreter = interpreter::Interpreter::new();
 
             if let Err(runtime_error) = interpreter.interpret(program) {
-                println!("Runtime error: {}", runtime_error);
+                println!("Runtime error: {runtime_error}");
             } else {
                 println!("Program executed successfully!");
             }
         }
         Err(parse_error) => {
-            println!("Parse error: {:?}", parse_error);
+            println!("Parse error: {parse_error:?}");
         }
     }
 }

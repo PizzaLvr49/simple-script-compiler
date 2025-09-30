@@ -216,7 +216,7 @@ impl<'a> Parser<'a> {
             Ok(())
         } else {
             Err(ParseError::UnexpectedToken {
-                expected: format!("{:?}", expected),
+                expected: format!("{expected:?}"),
                 found: self.lexer.current_token().clone(),
             })
         }

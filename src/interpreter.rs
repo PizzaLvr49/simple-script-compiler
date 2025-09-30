@@ -13,15 +13,15 @@ pub enum Value {
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Value::String(s) => write!(f, "{}", s),
+            Value::String(s) => write!(f, "{s}"),
             Value::Number(n) => {
                 if n.fract() == 0.0 {
-                    write!(f, "{}", *n as i64)
+                    write!(f, "{0}", *n as i64)
                 } else {
-                    write!(f, "{}", n)
+                    write!(f, "{n}")
                 }
             }
-            Value::Boolean(b) => write!(f, "{}", b),
+            Value::Boolean(b) => write!(f, "{b}"),
             Value::Null => write!(f, "null"),
         }
     }
@@ -42,24 +42,17 @@ pub enum RuntimeError {
 impl std::fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RuntimeError::UndefinedVariable(name) => {
-                write!(f, "Undefined variable '{}'", name)
-            }
-            RuntimeError::UndefinedFunction(name) => {
-                write!(f, "Undefined function '{}'", name)
-            }
-            RuntimeError::TypeError(msg) => write!(f, "Type error: {}", msg),
+            RuntimeError::UndefinedVariable(name) => write!(f, "Undefined variable '{name}'"),
+            RuntimeError::UndefinedFunction(name) => write!(f, "Undefined function '{name}'"),
+            RuntimeError::TypeError(msg) => write!(f, "Type error: {msg}"),
             RuntimeError::ArityMismatch {
                 function,
                 expected,
                 found,
-            } => {
-                write!(
-                    f,
-                    "Function '{}' expects {} arguments, but {} were provided",
-                    function, expected, found
-                )
-            }
+            } => write!(
+                f,
+                "Function '{function}' expects {expected} arguments, but {found} were provided"
+            ),
         }
     }
 }
@@ -75,7 +68,6 @@ impl Environment {
             variables: HashMap::new(),
         }
     }
-
     pub fn define(&mut self, name: String, value: Value) {
         self.variables.insert(name, value);
     }
@@ -85,6 +77,12 @@ impl Environment {
             .get(name)
             .cloned()
             .ok_or_else(|| RuntimeError::UndefinedVariable(name.to_string()))
+    }
+}
+
+impl Default for Environment {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -99,7 +97,6 @@ impl Interpreter {
             environment: Environment::new(),
         }
     }
-
     pub fn interpret(&mut self, program: Program) -> Result<(), RuntimeError> {
         for statement in program.statements {
             self.execute_statement(statement)?;
@@ -164,7 +161,7 @@ impl Interpreter {
                 Ok(Value::Number(result))
             }
             (Value::String(l), Value::String(r)) if matches!(op, BinaryOp::Add) => {
-                Ok(Value::String(format!("{}{}", l, r)))
+                Ok(Value::String(format!("{l}{r}")))
             }
             (l, r) => Err(RuntimeError::TypeError(format!(
                 "Cannot apply {:?} to {} and {}",
@@ -198,7 +195,7 @@ impl Interpreter {
             if i > 0 {
                 print!(" ");
             }
-            print!("{}", arg);
+            print!("{arg}");
         }
         Ok(Value::Null)
     }
@@ -230,6 +227,12 @@ impl Interpreter {
 
     pub fn get_variables(&self) -> &HashMap<String, Value> {
         &self.environment.variables
+    }
+}
+
+impl Default for Interpreter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
