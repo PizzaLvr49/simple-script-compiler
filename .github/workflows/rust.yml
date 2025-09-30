@@ -56,8 +56,9 @@ jobs:
         run: cargo doc --no-deps
 
       - name: Upload pages artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
+          name: docs
           path: ./target/doc
 
   deploy:
