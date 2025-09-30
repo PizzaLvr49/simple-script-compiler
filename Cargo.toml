@@ -3,4 +3,11 @@ name = "simple-script-compiler"
 version = "0.1.0"
 edition = "2024"
 
+description = "A tiny simple script language compiler/interpreter for learning and testing."
+authors = ["jhtod <jhtod@example.com>"]
+license = "MIT"
+repository = "https://github.com/PizzaLvr49/simple-script-compiler"
+keywords = ["compiler", "interpreter", "toy-language", "learning"]
+readme = "README.md"
+
 [dependencies]
